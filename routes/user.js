@@ -142,9 +142,10 @@ router.get('/token', authMiddleware, async (req, res) => {
     res.send({
         'ok': true,
         user: {
-            id: user.id,
+            // id: user.id,
             userId: user.userId,
             nickname: user.nickname,
+            name: user.name,
         }
     });
 })
