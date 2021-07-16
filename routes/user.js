@@ -1,147 +1,140 @@
-const express = require('express');
-const app = express();
+const express = require("express")
+const router = express.Router() //라우터라고 선언한다.
+
+const jwt = require("jsonwebtoken")
+
+// const url = require('url')
+const authMiddleware = require("../middlewares/auth-middleware")
+const User = require("../schemas/user")
+const Joi = require("joi")
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { Op } = require('sequelize');
-const users = require('../models/user');
-const comments = require('../models/comment');
-const menus = require('../models/menu');
-const authMiddleware = require('../middlewares/auth-middleware');
-require('dotenv').config();
-const Joi = require('joi');
-const router = express.Router();
 
-app.use('/user', express.urlencoded({ extended: false }), router);
-
-app.use(express.json());
-
+// 조이 스키마 정의. 올바른 스키마인지 검증
 const postUsersSchema = Joi.object({
-    userId: Joi.string().alphanum().min(3).max(20).required(),
-    nickname: Joi.string().min(3).max(20).required(),
-    password: Joi.string().min(3).required(),
-    passwordConfirm: Joi.string().min(3).required(),
+    nickname: Joi.string()
+        .alphanum()
+        .min(4)
+        .max(30)
+        .required(),
+    name: Joi.string()
+        .max(30)
+        .required(),
+    // email: Joi.string().email().required(), // 문자열.이메일.필수
+    password: Joi.string()
+        .pattern(new RegExp('^[a-zA-Z0-9]{4,30}$'))
+        .required(),
+    passwordConfirm: Joi.string()
+        .required(), // 문자열.필수
 })
 
 // 회원가입
-router.post('/register', async (req, res) => {
+router.post('/register', async (req, res) => { // post
     try {
-        const { userId, nickname, password, passwordConfirm } = await postUsersSchema.validateAsync(req.body);
-
-        if (nickname.includes(password) || password.includes(nickname)) {
+        // userId 생성
+        const recentUser = await User.find().sort("-userId").limit(1) // 최근 저장값 순차정렬
+        let userId = 1                              // ㅋㅋㅋ 정렬 안 하고 2로 계속 저장을 하냐!?
+        if(recentUser.length != 0){ // 값이 있으면 
+            userId = recentUser[0]['userId'] + 1 // 새 배열 생성해서 1번부터 번호 부여 
+        } 
+        const { nickname, name, password, passwordConfirm } = await postUsersSchema.validateAsync(req.body) //받은 body를 변수로 하나씩 넣어준다. 
+        if (nickname === password) {
             res.status(400).send({
-                message: '비밀번호에 닉네임이 포함되어 있습니다.',
-            });
-            return;
+                errorMessage: "아이디, 비밀번호가 같습니다"
+            })
+            return
         }
+        // console.log(nickname)
+        // 내가 받아온 닉네임 값과 디비에 있는 닉네임 값을 비교해서 중복되는지 알려줘
+        const nic = await User.find({ nickname: nickname })
+        if (nic.length !== 0){
+            res.status(400).send({ 
+                errorMessage: "닉네임이 중복되었습니다" 
+            })
+            return
+        } 
+        else if(password !== passwordConfirm){
+            res.status(400).send({ 
+                errorMessage: "비밀번호가 서로 맞지 않습니다" 
+            })
+            return
+        } 
+        // else{
+        //     await User.create({ userId, nickname, password }) //만들어서 집어넣는다.
+        //     res.send({ result: "success" }) //잘했다고 칭찬해준다.ㅋㅋㅋㅋㅋㅋㅋㅋ 
+        // }
 
-        if (userId.includes(password) || password.includes(userId)) {
-            res.status(400).send({
-                message: '비밀번호에 ID가 포함되어 있습니다.',
-            });
-            return;
-        }
-
-        if (password !== passwordConfirm) {
-            res.status(400).send({
-                message: '비밀번호가 비밀번호 확인란과 동일하지 않습니다',
-            });
-            return;
-        }
-
-        // 아이디 중복 체크
-        const existUserId = await users.findAll({
-            where: {
-                [Op.or]: [{ userId }],
-            }
-        });
-        if (existUserId.length) {
-            res.status(400).send({
-                message: '중복되는 ID 입니다. 다른 ID를 선택하세요',
-            });
-            return;
-        }
-
-        // 닉네임 중복 체크
-        const existNickname = await users.findAll({
-            where: {
-                [Op.or]: [{ nickname }],
-            }
-        });
-        if (existNickname.length) {
-            res.status(400).send({
-                message: '중복되는 닉네임 입니다. 다른 닉네임을 선택하세요',
-            });
-            return;
-        }
-
-        // ENCRYPTING PASSWORD
+        // bcrypt
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(password, salt);
-
-        await users.create({ userId, nickname, hashedPassword });
+        await User.create({ userId, name, nickname, hashedPassword });
 
         res.status(201).send({
             'ok': true,
             message: '회원가입 성공'
         });
+
     } catch (error) {
-        console.log('회원가입 catch error', error);
+        console.log('회원가입 CATCH ERROR', error);
         res.status(400).send({
             'ok': false,
             message: '회원가입 실패'
         })
     }
-
 })
 
+// 로그인 쪽 검증 - Joi 사용
+const postAuthSchema = Joi.object({
+    // email: Joi.string().email().required(),
+    nickname: Joi.string().required(), // 문자열.필수값
+    password: Joi.string().required(),
+})
+
+// 로그인
 router.post('/login', async (req, res) => {
     try {
-        const { userId, password } = req.body;
-        const user = await users.findOne({ where: { userId: userId } });
+        const { nickname, password } = await postAuthSchema.validateAsync(req.body) //받은 body를 변수로 하나씩 넣어준다.
+        // console.log(nickname, password)
+        const user = await User.findOne({ nickname }).exec() // 왜 쓰는지 공부 exec
+        // console.log(user)
+        //null, undefined 에다가 ! 붙이면 true
         if (!user) {
             res.status(400).send({
-                message: 'ID나 비밀번호가 잘못됐습니다.',
-            });
-            return;
+                // 401이 인증실패 스테이터스 코드인데 일단 400 사용
+                errorMessage: "이메일 또는 패스워드가 틀렸어", // 불친절 해야 함
+            })
+            return
         }
 
         const authenticate = await bcrypt.compare(password, user.hashedPassword);
         if (authenticate === true) {
-            const nickname = user.nickname;
-            const id = user.id;
+            // const nickname = user.nickname;
+            // const id = User.id;
 
-            const token = jwt.sign({
-                userId: user.userId
-            }, process.env.JWT_SECRET,
-                { expiresIn: '1h' });
-            //토큰 시간이 끝날경우 그에 맞는 에러값을 보내줘보자.
-
+            const token = jwt.sign({ userId: user.userId }, 'my-secret-key');
             res.send({
-                token: token,
-                result: {
-                    'ok': true,
-                    user: {
-                        nickname: nickname,
-                        userId: userId,
-                        id: id,
-                    }
-                },
+                token,
+                // result: {
+                //     'ok': true,
+                //     user: {
+                //         nickname: nickname,
+                        // userId: userId
+                //     }
+                // },
             });
         } else {
-            res.status(400).send({
+            res.status(401).send({
                 message: 'ID나 비밀번호가 잘못됐습니다.',
             });
             return;
         }
     } catch (error) {
-        console.log('login catch ERROR', error);
+        console.log('login CATCH ERROR', error);
         res.status(400).send({
             'ok': false,
             message: '로그인 실패'
         })
     }
-
-});
+})
 
 router.get('/token', authMiddleware, async (req, res) => {
     const { user } = res.locals;
@@ -156,19 +149,40 @@ router.get('/token', authMiddleware, async (req, res) => {
     });
 })
 
-router.get('/entries', authMiddleware, async (req, res) => {
-    const { user } = res.locals;
-    const currentId = user.id;
-    const entries = await menus.findAll({
-        where: { userId: currentId },
-        attributes: ['name', 'description', 'img', 'like', 'userId', 'id', 'category1', 'category2', 'category3'],
-    });
 
-    res.send({
-        'ok': true,
-        entries: entries,
-    });
-})
+module.exports = router //얘 라우터라고 알려주는거임 // 그러니까 그걸 왜 못 찾았지
 
 
-module.exports = router;
+    // const all=await User.find({})
+    // for (user of all){
+    //     if(user['nickname']==nickname){
+    //         res.send({result:"fail"})
+    //     }
+    // }
+    // const duplicate = await User.find({nickname})
+
+
+    // 시간복잡도를 개선하기 위한 세번의 코드 수정 기록...ㅋㅋ
+
+        // if (nic.length === 0 && password === passwordConfirm) {
+    //      // []
+    //     await User.create({ userId, nickname, password }) //만들어서 집어넣는다. 
+        
+    //     res.send({ result: "success" }) //잘했다고 칭찬해준다.ㅋㅋㅋㅋㅋㅋㅋㅋ 
+    // } else if (nic.length !== 0) {
+    //     res.send({ result: "닉네임이 중복되었습니다" })
+    // } else if (password !== passwordConfirm) {
+    //     res.send({ result: "비밀번호가 서로 맞지 않습니다" })
+    // }
+    
+    // 역시 김예지 선생! 과제 내 주고 어떻게든 해결 했는데 신박하다 칭찬 해 주셨다...
+    // if (nic.length === 0) {
+    //     if (password === passwordConfirm) {
+    //         await User.create({ userId, nickname, password }) //만들어서 집어넣는다.
+    //         res.send({ result: "success" }) //잘했다고 칭찬해준다.ㅋㅋㅋㅋㅋㅋㅋㅋ 
+    //     } else {
+    //         res.send({ result: "비밀번호가 서로 맞지 않습니다" })
+    //     }
+    // } else {
+    //     res.send({ result: "닉네임이 중복되었습니다" })
+    // }
