@@ -1,0 +1,133 @@
+paths:
+ /menu:
+  get:
+     tags:
+     - menu
+     description: 모든 메뉴 조회
+     produces:
+     - application/json
+     parameters:
+        - in: query
+          name: category1
+          required: true
+          schema:
+            type: integer
+            description: 카테고리1
+        - in: query
+          name: category2
+          required: true
+          schema:
+            type: integer
+            description: 카테고리2
+        - in: query
+          name: category3
+          required: true
+          schema:
+            type: integer
+            description: 카테고리3
+     responses:
+      200:
+       description: 메뉴 조회 성공
+  post:
+    summary: create a menu
+    tags:
+      - menu
+    requestBody:
+      description: 
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                required: true
+              description:
+                type: string
+                required: true
+              category1:
+                type: string
+                required: true
+              category2:
+                type: string
+                required: true
+              category3:
+                type: string
+                required: true
+              id:
+                type: integer
+                required: true
+              img:
+                type: string
+                format: binary
+    responses:
+      201:
+       description: 메뉴 등록 성공
+ /menu/{id}:
+   get:
+     summary: 메뉴 상세 조회
+     tags:
+       - menu
+     parameters:
+       - name: id
+         in: path
+         required: true
+         description: The id of the menu to retrieve
+         schema:
+         type: string
+     responses:
+       200:
+        description: Expected response to a valid request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Menu'
+   patch:
+     summary: 메뉴 수정
+     tags:
+       - menu
+     parameters:
+       - name: id
+         in: path
+         required: true
+         description: The id of the menu to update
+         schema:
+         type: string
+     requestBody:
+       description: 
+       content:
+         multipart/form-data:
+           schema:
+             type: object
+             properties:
+               description:
+                 type: string
+               category1:
+                 type: string
+               category2:
+                 type: string
+               category3:
+                 type: string
+               img:
+                 type: string
+                 format: binary
+               id:
+                 type: integer
+                 required: true
+     responses:
+       201:
+        description: response
+   delete:
+     summary: 메뉴 삭제
+     tags:
+       - menu
+     parameters:
+       - name: id
+         in: path
+         required: true
+         description: The id of the menu to delete
+         schema:
+           type: string
+     responses:
+        201:
+         description: response

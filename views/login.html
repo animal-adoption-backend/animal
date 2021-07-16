@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.5.1.js"
+        integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+
+    <title>로그인</title>
+    <script>
+        function getSelf(callback) {
+            $.ajax({
+                type: 'GET',
+                url: '/user/token',
+                headers: {
+                    authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+                success: function (response) {
+                    callback(response.user);
+                },
+                error: function (xhr, status, error) {
+                    if (status == 401) {
+                        alert('로그인이 필요합니다.');
+                    } else {
+                        localStorage.clear();
+                        alert('알 수 없는 문제가 발생했습니다. 관리자에게 문의하세요.');
+                    }
+                    window.location.href = '/login';
+                },
+            });
+        }
+        if (localStorage.getItem("token")) {
+            getSelf(function () {
+                alert("이미 로그인이 되어있습니다. 메인 페이지로 이동합니다.");
+                window.location.href = "/";
+            });
+        }
+
+        function signin() {
+            let userId = $('#userId').val();
+            let password = $('#pw').val();
+
+            $.ajax({
+                type: "POST",
+                url: `/user/login`,
+                data: {
+                    userId: userId,
+                    password: password,
+                },
+                success: function (response) {
+                    console.log('login successful');
+                    localStorage.setItem("token", response.token);
+                    window.location.replace("/");
+                },
+                error: function (error) {
+                    window.alert(error.responseJSON.message);
+                }
+            })
+        }
+
+        function noLogin() {
+            window.location.href = '/';
+        }
+    </script>
+</head>
+
+<body>
+
+    <h1>
+        로그인을 하쇼
+    </h1>
+
+    <div>
+        <button onclick="noLogin()">로그인 없이 글 보기</button>
+    </div>
+
+    <div>
+        ID: <input id="userId" type="text">
+    </div>
+    <div>
+        비밀번호: <input id="pw" type="password">
+    </div>
+    <button onclick="signin()">로그인</button>
+
+    <div>
+        <button onclick="window.location.href='/register'">회원가입</button>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>commetns demo</title>
+
+    <script>
+        $(document).ready(function () {
+            loadComment()
+        })
+
+        function saveComment() {
+            // let searchParams = new URLSearchParams(window.location.search)
+            // let postId = searchParams.get('menuId')
+
+            // if ($('#description').val().length === 0) {
+            //     alert("댓글 내용을 입력해 주세요")
+            //     window.location.reload()
+            // } else {
+                $.ajax({
+                    type: "POST",
+                    url: "api/comments",
+                    data: {
+                        description:$('#description').val(),
+                    },
+                    success: function (response) {
+                        if (response["result"] == "success") {
+                            alert("댓글 작성 완료!")
+                        }
+                        // window.location.href = `/detail?postId=${postId}` // 두가지 방법을 쓸 수 있다아~
+                        window.location.reload()
+                    }
+                })
+            // }
+        }
+
+        function loadComment(){
+            let searchParams = new URLSearchParams(window.location.search)
+            let postId = searchParams.get('postId')
+
+            $.ajax({
+                type: "GET",
+                url: `/api/comments/menuId`,
+                dataType:'json',
+                data: { postId },
+                success: function (response) {
+                    let comment = response["comment"]
+                    for ( let i = 0; i < comment.length; i++ ) {
+
+                        let author = comment[i]['author']
+                        let description = comment[i]['description']
+                        let date = comment[i]['date']
+                        let commentId=comment[i]['commentId']
+
+                        let temp_html=`
+                            `
+                        $('#commentList').append(temp_html)
+                    }
+                }
+            })
+        }
+
+        function deleteComment(commentId) {
+            if(confirm("정말로 삭제하시겠습니까?") == true) { 
+                $.ajax({
+                    type: "DELETE",
+                    url: `api/comments`,
+                    data: { commentId },
+                    headers: {
+                        authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    success: function(response) {
+                        if (response["result"] == "success") {
+                            alert('삭제완료!')
+                        } else {
+                            alert("당신에게는 권한이 없습니다!")
+                        }
+                        window.location.reload()
+                    }
+                })
+                }
+            else{
+                return ;
+            }
+        }
+
+        function modifyComment(commentId) {
+            // if ($('#btn-modify'+commentId).text() === '수정완료') {
+                $.ajax({
+                    type: "PUT",
+                    url: `api/comments`,
+                    data: { 
+                        commentId, 
+                        description: $('#newDesc').val(),
+                    },
+                    // headers: {
+                    //     authorization: `Bearer ${localStorage.getItem("token")}`,
+                    // },
+                    success: function (response) {
+                        console.log(response)
+                        if (response["result"] == "success") {
+                            alert("수정 완료!")
+                        } else {
+                            alert(response["result"])
+                        }
+                        window.location.reload()
+                    }
+                    
+                })
+            }
+
+            // let baseComment = $('#desc'+commentId).text()
+
+            // $('#desc'+commentId).empty()
+            // $("#desc"+commentId).append(`<textarea id="newDesc">${baseComment}</textarea>`);
+            // $('#btn-modify'+commentId).empty()
+            // $('#btn-modify'+commentId).append(`수정완료`)
+        // }
+
+    </script>
+</head>
+<body>
+    <div>
+        <textarea id="description" cols="30" rows="10"></textarea>
+    </div>
+    <div id="commentList">
+        댓글
+        <button onclick="saveComment()">댓글 작성</button>
+        <button>삭제</button>
+    </div>
+
+    <div>
+        댓글
+        <button>댓글 작성</button>
+        <button>삭제</button>
+    </div>
+
+
+</body>
+</html>
