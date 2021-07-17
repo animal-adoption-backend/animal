@@ -111,6 +111,12 @@ router.post('/login', async (req, res) => {
             // const id = User.id;
 
             const token = jwt.sign({ userId: user.userId }, 'my-secret-key');
+
+            res.status(201).send({
+                token,
+                'ok': true,
+                message: '회원가입 성공'
+            });
             res.send({
                 token,
                 // result: {
