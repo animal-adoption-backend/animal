@@ -20,6 +20,9 @@ app.use(express.json());
 const userRouter = require("./routes/user") //라우터를 생성한다.
 app.use("/api", [userRouter]) //api를 호출해서 get등의 방식으로 데이터를 리턴한다
 
+const commentRouter = require("./routes/comment") //라우터를 생성한다.
+app.use("/api", [commentRouter]) //api를 호출해서 get등의 방식으로 데이터를 리턴한다
+
 // app.use(express.urlencoded({ extended: false }))
 
 

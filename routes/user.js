@@ -43,8 +43,7 @@ router.post('/register', async (req, res) => { // post
             })
             return
         }
-        // console.log(nickname)
-        // 내가 받아온 닉네임 값과 디비에 있는 닉네임 값을 비교해서 중복되는지 알려줘
+        // 닉네임, 비밀번호 중복 검사
         const nic = await User.find({ nickname: nickname })
         if (nic.length !== 0){
             res.status(400).send({ 
@@ -57,11 +56,7 @@ router.post('/register', async (req, res) => { // post
                 errorMessage: "비밀번호가 서로 맞지 않습니다" 
             })
             return
-        } 
-        // else{
-        //     await User.create({ userId, nickname, password }) //만들어서 집어넣는다.
-        //     res.send({ result: "success" }) //잘했다고 칭찬해준다.ㅋㅋㅋㅋㅋㅋㅋㅋ 
-        // }
+        }
 
         // bcrypt
         const salt = await bcrypt.genSalt();

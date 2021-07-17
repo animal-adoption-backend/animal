@@ -4,6 +4,7 @@ const router = express.Router() //라우터라고 선언한다.
 const Comment = require("../schemas/comment")
 
 const authMiddleware = require("../middlewares/auth-middleware")
+const user = require("../schemas/user")
 
 // var bodyParser = require('body-parser')
 
@@ -11,19 +12,21 @@ const authMiddleware = require("../middlewares/auth-middleware")
 // router.use(express.urlencoded({extended : false}));
 
 
-router.post('/comment', authMiddleware, async (req, res) => { // post
+router.post('/comment', async (req, res) => { // post
     try {
         const { animalId, userId, description } = req.body
 
         const recentComment = await Comment.find().sort("-commentId").limit(1) // 최근 코메트 찾아서 정렬
-    
         let commentId = 1
         if(recentComment.length != 0){ // 최근 코멘트가 있으면
             commentId = recentComment[0]['commentId'] + 1 // 새 배열 생성해서 1번부터 번호 부여
         }
-        
+
         const date = ( new Date().format("yyyy-MM-dd a/p hh:mm:ss"))
         await Comment.create({ commentId, animalId, userId, description, date }) //만들어서 집어넣는다.
+
+        const name = await user.findOne({ userId })
+        console.log(name)
 
         res.status(201).send({
             'ok': true,
@@ -69,15 +72,15 @@ router.delete("/comment", authMiddleware, async (req, res) => { // /modify/:post
     const p = await Comment.findOne({ commentId }) // js의 위력. 선언하지 않고도 쓴다
     const dbNickname = p["author"] // 디비 닉네임
     // console.log(tokenNickname, dbNickname)
-    
+
     if ( tokenNickname === dbNickname ) {
         await Comment.deleteOne({ commentId })
         res.send({ result: "success" }) //잘했다고 칭찬해준다.ㅋㅋㅋㅋㅋㅋㅋㅋ
-      } 
-      else {
+    } 
+    else {
         res.send({ result: "당신에게는 권한이 없습니다!서버" }) //틀렸다고 혼내준다
-      }
-  })
+    }
+})
 
 
 router.put("/comment", authMiddleware, async (req, res) => {
@@ -91,9 +94,9 @@ router.put("/comment", authMiddleware, async (req, res) => {
     if ( tokenNickname === dbNickname ) {
         await Comment.updateOne({ commentId }, { $set: { description } })
         res.send({ result: "success" }) //잘했다고 칭찬해준다.ㅋㅋㅋㅋㅋㅋㅋㅋ
-      } else {
+    } else {
         res.send({ result: "혼날래?"})
-      }
+    }
 })
 
 
@@ -103,7 +106,7 @@ Date.prototype.format = function(f) {
 
     var weekName = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]
     var d = this
-        
+
     return f.replace(/(yyyy|yy|MM|dd|E|hh|mm|ss|a\/p)/gi, function($1) {
         switch ($1) {
             case "yyyy": return d.getFullYear()
@@ -125,4 +128,4 @@ String.prototype.string = function(len){var s = '', i = 0; while (i++ < len) { s
 String.prototype.zf = function(len){return "0".string(len - this.length) + this;}
 Number.prototype.zf = function(len){return this.toString().zf(len);}
 
-  module.exports = router //얘 라우터라고 알려주는거임 // 그러니까 그걸 왜 못 찾았지
+module.exports = router //얘 라우터라고 알려주는거임 // 그러니까 그걸 왜 못 찾았지
