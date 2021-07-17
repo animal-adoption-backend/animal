@@ -1,9 +1,12 @@
+'use strict'
+
 const express = require("express")
 const router = express.Router() //라우터라고 선언한다.
 
 const Comment = require("../schemas/comment")
 
 const authMiddleware = require("../middlewares/auth-middleware")
+<<<<<<< HEAD
 const user = require("../schemas/user")
 
 // var bodyParser = require('body-parser')
@@ -12,11 +15,21 @@ const user = require("../schemas/user")
 // router.use(express.urlencoded({extended : false}));
 
 
+=======
+const User = require("../schemas/user")
+
+
+// 코멘트 작성
+>>>>>>> 4ca707a0a5549f7bb2ddb84790a5c59497a045ff
 router.post('/comment', async (req, res) => { // post
     try {
         const { animalId, userId, description } = req.body
 
         const recentComment = await Comment.find().sort("-commentId").limit(1) // 최근 코메트 찾아서 정렬
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4ca707a0a5549f7bb2ddb84790a5c59497a045ff
         let commentId = 1
         if(recentComment.length != 0){ // 최근 코멘트가 있으면
             commentId = recentComment[0]['commentId'] + 1 // 새 배열 생성해서 1번부터 번호 부여
@@ -42,28 +55,38 @@ router.post('/comment', async (req, res) => { // post
     }
 })
 
-
+// 코멘트 조회 ( 두 테이블 조회하여 하나의 결과값으로 재가공 하여 response )
 router.get("/comment/:animalId", async (req, res, next) => {
+    try {
+        const { animalId } = req.params
 
-    const { animalId } = req.params
+        const comment = await Comment.find({ animalId }).sort("-commentId").lean()
 
-    console.log(animalId)
+        for ( let i = 0; i < comment.length; i++ ) {
+            let userId = comment[i]["userId"]
 
-    const comment = await Comment.find({ animalId }).sort("-commentId") // 4
-    // console.log(comment)
-    res.json({ comment: comment })
+            const user = await User.findOne({ userId })
 
-//   try {
-//     const comment = await Comment.find({}).sort("-commentId"); //검색할 카테고리를 포함한 post를 postId 역정렬(마이너스)
-//     res.json({ comment: comment }); //결과를 json에 담는다
-//   } catch (err) {
-//     console.error(err);
-//     next(err);
-//   }
-});
+            comment[i].name = user.name
+        }
+        console.log(comment)
+        res.status(201).send({
+            comment,
+            'ok': true,
+            message: '댓글조회 성공'
+        })
+    } catch (error) {
+        console.log('댓글조회 CATCH ERROR', error);
+        res.status(400).send({
+            'ok': false,
+            message: '댓글조회 실패'
+        })
+    }
+})
 
-
+// 코멘트 삭제
 router.delete("/comment", authMiddleware, async (req, res) => { // /modify/:postId
+<<<<<<< HEAD
     const { user } = res.locals
     const { commentId } = req.body
     // console.log(commentId)
@@ -82,8 +105,38 @@ router.delete("/comment", authMiddleware, async (req, res) => { // /modify/:post
     }
 })
 
+=======
+    try {
+        const { user } = res.locals
+        // console.log(user)
+        const { commentId } = req.body
+        // console.log(commentId)
 
+        const tokenUserId = user["userId"] // 토큰 유저아이디
+        const p = await Comment.findOne({ commentId })
+        const dbUserId = p["userId"] // 디비 유저아이디
+        // console.log(tokenNickname, dbNickname)
+
+        if ( tokenUserId === dbUserId ) {
+            await Comment.deleteOne({ commentId })
+            res.status(200).send({
+                'ok': true,
+                message: '댓글삭제 성공'
+            })
+        } 
+    } catch(error) {
+        console.log('댓글삭제 CATCH ERROR', error);
+        res.status(400).send({
+            'ok': false,
+            message: '댓글삭제 실패'
+        })
+    }
+})
+>>>>>>> 4ca707a0a5549f7bb2ddb84790a5c59497a045ff
+
+// 댓글 수정
 router.put("/comment", authMiddleware, async (req, res) => {
+<<<<<<< HEAD
     const { user } = res.locals
     const { commentId, description } = req.body
 
@@ -97,6 +150,37 @@ router.put("/comment", authMiddleware, async (req, res) => {
     } else {
         res.send({ result: "혼날래?"})
     }
+=======
+    try {
+        const { user } = res.locals
+        const { commentId, description } = req.body
+    
+        const tokenUserId = user["userId"] // 토큰 유저 아이디
+        const p = await Comment.findOne({ commentId }) // js의 위력. 선언하지 않고도 쓴다
+        const dbUserId = p["userId"] // 디비 유저 아이디
+    
+        if ( tokenUserId === dbUserId ) {
+            await Comment.updateOne({ commentId }, { $set: { description } })
+            
+            res.status(200).send({
+                'ok': true,
+                message: '댓글수정 성공'
+            })
+        } else {
+            res.status(400).send({
+                'ok': false,
+                message: '당신에게는 권한이 없습니다'
+            })
+        }
+    } catch(error) {
+        console.log('댓글수정 CATCH ERROR', error);
+        res.status(400).send({
+            'ok': false,
+            message: '댓글수정 실패'
+        })
+    }
+
+>>>>>>> 4ca707a0a5549f7bb2ddb84790a5c59497a045ff
 })
 
 
