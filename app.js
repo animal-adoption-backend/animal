@@ -6,6 +6,11 @@ const app = express();
 
 app.set('port', process.env.PORT || 3000);
 
+const cors = require('cors');
+
+app.use(cors());
+
+
 const connect = require('./schemas')
 connect();
 
