@@ -1,12 +1,13 @@
 const express = require('express');
 
+const router = express.Router();
 
 const app = express();
 
 app.set('port', process.env.PORT || 3000);
 
 const connect = require('./schemas')
-connect()
+connect();
 
 // ejs 사용한다?
 app.set('views', __dirname + '/views') // 경로 명시?
@@ -15,6 +16,7 @@ app.set('view engine', 'ejs')
 //middleware
 app.use(express.urlencoded({ extend: true }));
 app.use(express.json());
+app.use(express.static('public'));
 
 
 const userRouter = require("./routes/user") //라우터를 생성한다.

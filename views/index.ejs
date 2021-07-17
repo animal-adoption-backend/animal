@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.5.1.js"
+        integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+
+    <title>회원가입</title>
+
+    <script>
+        
+        
+        function submitAnimal() {
+            let title = $('#title').val();
+            let name = $('#name').val();
+            let species = $('#species').val();
+            let breed = $('#breed').val();
+            let age = $('#age').val();
+            let gender = $('#gender').val();
+            let story = $('#story').val();
+            let img = $('#img').val();
+
+            
+            $.ajax({
+                type: "POST",
+                url: `/api/animals`,
+                data: {
+                    title: title,
+                    animalName: name,
+                    animalSpecies: species,
+                    animalBreed: breed,
+                    animalAge: age,
+                    animalGender: gender,
+                    animalStory: story,
+                    animalPhoto: photo,
+                },
+                success: function (response) {
+                    console.log("submitting animal POST API successful");
+
+                },
+                error: function (error) {
+                    console.log('error submitting animal...');
+                    // window.alert(error.responseJSON.errorMessage);
+                }
+            })
+        };
+
+
+        function showAnimals() {
+            $.ajax({
+                type: 'GET',
+                url: `/api/animals`,
+                data: {},
+                success: function (response) {
+                    console.log('get api successful');
+
+                    let userId = response['post']['userId'];
+                    let nickname = response['nicknames'][userId - 1]['nickname'];
+                    let title = response['post']['title'];
+                    let content = response['post']['content'];
+                    let updatedAt = response['post']['updatedAt'];
+
+
+                    $('#nickname').append('작성자: ', nickname);
+                    $('#title').append('제목: ', title);
+                    $('#updatedAt').append('수정 날짜: ', updatedAt);
+                    $('#content').append('내용: ', content);
+                },
+                error: function (error) {
+                    window.alert(error.responseJSON.errorMessage);
+                    if (error.status === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            })
+        };
+
+    </script>
+</head>
+
+<body>
+
+    <h1>
+        동물을 등록하쇼~
+    </h1>
+
+    <div>
+        <div>
+            제목: <input id="title" type="text">
+        </div>
+        <div>
+            동물 이름: <input id="name" type="text">
+        </div>
+        <div>
+            동물 species: <input id="species" type="text">
+        </div>
+        <div>
+            동물 breed: <input id="breed" type="text">
+        </div>
+        <div>
+            동물 성별: <input id="gender" type="text">
+        </div>
+        <div>
+            동물 나이: <input id="age" type="text">
+        </div>
+        <div>
+            스토리: <textarea id="story" type="text"></textarea>
+        </div>
+        <div>
+            사진: <input id="img" type="text">
+        </div>
+
+
+        <div>
+            <button onclick="submitAnimal()">동물 등록</button>
+        </div>
+    </div>
+
+</body>
+
+</html>
