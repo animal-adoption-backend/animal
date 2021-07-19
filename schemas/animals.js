@@ -2,14 +2,18 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const animalsSchema = new Schema({
+    like: {
+        type: Number,
+        required: true,
+    },
     animalId:{
         type:Number,
         required:true,
     },
-    userId: {
-        type: Number,
-        required: true,
-    },
+    // userId: {
+    //     type: Number,
+    //     required: true,
+    // },
     title: {
         type: String,
         required: true,
@@ -44,4 +48,4 @@ const animalsSchema = new Schema({
     },
 });
 
-module.exports = mongoose.model("posts",postsSchema);
+module.exports = mongoose.model("animals", animalsSchema);

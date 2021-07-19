@@ -1,15 +1,18 @@
 const express = require('express');
 
-const router = express.Router();
-
 const app = express();
+
+// swagger
+const { swaggerUi, specs } = require('./swagger/swagger');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs)); //라우터 위에
+
+const router = express.Router();
 
 app.set('port', process.env.PORT || 3000);
 
+// cores
 const cors = require('cors');
-
 app.use(cors());
-
 
 const connect = require('./schemas')
 connect();
@@ -29,6 +32,9 @@ app.use("/api", [userRouter]) //api를 호출해서 get등의 방식으로 데�
 
 const commentRouter = require("./routes/comment") //라우터를 생성한다.
 app.use("/api", [commentRouter]) //api를 호출해서 get등의 방식으로 데이터를 리턴한다
+
+const animalsRouter = require("./routes/animals") //라우터를 생성한다.
+app.use("/api", [animalsRouter]) //api를 호출해서 get등의 방식으로 데이터를 리턴한다
 
 // app.use(express.urlencoded({ extended: false }))
 

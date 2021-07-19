@@ -101,6 +101,7 @@ router.delete("/comment", authMiddleware, async (req, res) => { // /modify/:post
 
 // 댓글 수정
 router.put("/comment", authMiddleware, async (req, res) => {
+
     try {
         const { user } = res.locals
         const { commentId, description } = req.body
