@@ -43,8 +43,8 @@ router.post("/animals", async (req, res) => {
     
     const recentAnimal = await Animals.find().sort("-animalId").limit(1)
     let animalId = 1
-    if(recentAnimal.length != 0){ // 최근 코멘트가 있으면
-      animalId = recentAnimal[0]['animalId'] + 1 // 새 배열 생성해서 1번부터 번호 부여
+    if(recentAnimal.length != 0){ 
+      animalId = recentAnimal[0]['animalId'] + 1
     }
     let like = 0
 
