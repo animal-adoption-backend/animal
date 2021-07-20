@@ -1,6 +1,10 @@
+'use strict'
+
 const express = require("express")
-const Animals = require("../schemas/animals")
 const router = express.Router()
+
+const Animals = require("../schemas/animals")
+const authMiddleware = require("../middlewares/auth-middleware")
 
 // 동물 좋아요
 router.post("/animalLike/:animalId", async (req, res) => {
@@ -76,13 +80,16 @@ router.get("/animals", async (req, res) => {
 })
 
 //동물 상세정보 불러오기
-router.get("/animals/:animalId", async (req, res) => {
+router.get("/animals/:animalId", authMiddleware, async (req, res) => {
   try {
+    const { user } = res.locals
+    // console.log(user)
+
     const { animalId } = req.params;
-    animal = await Animals.findOne({ animalId: animalId })
+    const animal = await Animals.findOne({ animalId: animalId })
     res.status(200).send({
       'ok': true,
-      result: animal,
+      result: animal, user
     })
   } catch (err) {
     console.error(err);

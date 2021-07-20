@@ -1,5 +1,4 @@
 const express = require('express');
-
 const app = express();
 
 // swagger
@@ -11,8 +10,10 @@ const router = express.Router();
 app.set('port', process.env.PORT || 3000);
 
 // cores
-const cors = require('cors');
-app.use(cors());
+const cors = require('cors')
+app.use(
+    cors({ origin: '*', credentials: true, }
+    ))
 
 const connect = require('./schemas')
 connect();

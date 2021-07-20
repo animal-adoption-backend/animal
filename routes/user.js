@@ -110,17 +110,7 @@ router.post('/login', async (req, res) => {
             res.status(201).send({
                 token,
                 'ok': true,
-                message: '회원가입 성공'
-            });
-            res.send({
-                token,
-                // result: {
-                //     'ok': true,
-                //     user: {
-                //         nickname: nickname,
-                        // userId: userId
-                //     }
-                // },
+                message: '로그인 성공'
             });
         } else {
             res.status(401).send({
