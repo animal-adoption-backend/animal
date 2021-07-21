@@ -11,9 +11,12 @@ const User = require("../schemas/user")
 
 
 // 코멘트 작성
-router.post('/comment', async (req, res) => { // post
+router.post('/comment', authMiddleware, async (req, res) => { // post
     try {
-        const { animalId, userId, description } = req.body
+        // 수정예정
+        const { user } = res.locals
+        const userId = user.userId
+        const { animalId, description } = req.body
 
         const recentComment = await Comment.find().sort("-commentId").limit(1) // 최근 코메트 찾아서 정렬
         let commentId = 1
@@ -23,9 +26,6 @@ router.post('/comment', async (req, res) => { // post
 
         const date = ( new Date().format("yyyy-MM-dd a/p hh:mm:ss"))
         await Comment.create({ commentId, animalId, userId, description, date }) //만들어서 집어넣는다.
-
-        const name = await User.findOne({ userId })
-        console.log(name)
 
         res.status(201).send({
             'ok': true,
@@ -140,7 +140,7 @@ Date.prototype.format = function(f) {
 
     var weekName = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]
     var d = this
-
+        
     return f.replace(/(yyyy|yy|MM|dd|E|hh|mm|ss|a\/p)/gi, function($1) {
         switch ($1) {
             case "yyyy": return d.getFullYear()
@@ -149,7 +149,7 @@ Date.prototype.format = function(f) {
             case "dd": return d.getDate().zf(2)
             case "E": return weekName[d.getDay()]
             case "HH": return d.getHours().zf(2)
-            case "hh": return ((h = d.getHours() % 12) ? h : 12).zf(2)
+            case "hh": return ((d.getHours() % 12) ? (d.getHours() % 12) : 12).zf(2)
             case "mm": return d.getMinutes().zf(2)
             case "ss": return d.getSeconds().zf(2)
             case "a/p": return d.getHours() < 12 ? "오전" : "오후"

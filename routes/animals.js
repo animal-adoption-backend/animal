@@ -4,6 +4,8 @@ const express = require("express")
 const router = express.Router()
 
 const Animals = require("../schemas/animals")
+const User = require("../schemas/user")
+
 const authMiddleware = require("../middlewares/auth-middleware")
 
 // 동물 좋아요
@@ -35,8 +37,11 @@ router.post("/animalLike/:animalId", async (req, res) => {
 })
 
 //동물 등록하기
-router.post("/animals", async (req, res) => {
+router.post("/animals", authMiddleware, async (req, res) => {
   try {
+    const { user } = res.locals
+    let userId = user.userId
+    // console.log(userId)
 
     const { title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto } = req.body
     // console.log(title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto)
@@ -48,10 +53,11 @@ router.post("/animals", async (req, res) => {
     }
     let like = 0
 
-    await Animals.create({ like, animalId, title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto })
+    await Animals.create({ userId, like, animalId, title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto })
     res.status(200).send({
       "ok": true,
       message: '동물 등록 성공',
+      user,
     })
   } catch (error) {
     console.error(error)
@@ -80,16 +86,20 @@ router.get("/animals", async (req, res) => {
 })
 
 //동물 상세정보 불러오기
-router.get("/animals/:animalId", authMiddleware, async (req, res) => {
+router.get("/animals/:animalId", async (req, res) => {
   try {
-    const { user } = res.locals
-    // console.log(user)
 
     const { animalId } = req.params;
-    const animal = await Animals.findOne({ animalId: animalId })
+    const animal = await Animals.findOne({ animalId })
+    const targetUserId = animal.userId
+    // console.log(targetUserId)
+    const targetUser = await User.findOne({ userId: targetUserId })
+    const name = targetUser.name
+    // console.log(name)
+
     res.status(200).send({
       'ok': true,
-      result: animal, user
+      result: animal, name
     })
   } catch (err) {
     console.error(err);
@@ -101,10 +111,14 @@ router.get("/animals/:animalId", authMiddleware, async (req, res) => {
 })
 
 //동물 정보 수정하기
-router.put("/animals/:animalId", async (req, res) => {
+router.put("/animals/:animalId", authMiddleware, async (req, res) => {
   try {
+    const { user } = res.locals
+    const userId = user.userId
+    // console.log(userId)
+
     const { animalId } = req.params
-    const { userId, title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto } = req.body
+    const { title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto } = req.body
     const target = await Animals.findOne({ 'animalId': animalId, 'userId': userId })
 
     if (!target) {
@@ -136,6 +150,37 @@ router.put("/animals/:animalId", async (req, res) => {
   }
 })
 
+// 삭제
+router.delete("/animals/:animalId", authMiddleware, async (req, res) => {
+  try {
+    const { user } = res.locals
+    const userId = user.userId
+    const { animalId } = req.params
+    const animalUser = await Animals.findOne({ animalId })
+    const animalUserId = animalUser.userId
+    // console.log(anumalUserId)
+    // console.log("-------------")
+    // console.log(animalId)
 
+    if ( userId != animalUserId ) {
+      res.status(401).send({
+        'ok': false,
+        message: '당신에게는 권한이 없습니다!',
+      })
+    }
+    await Animals.deleteOne({ userId, animalId})
+
+    res.status(200).send({
+      'ok': true,
+      message: '동물 삭제 성공',
+    })
+  } catch (err) {
+    console.error('동물 삭제 에러 메세지: ', err);
+    res.status(400).send({
+      'ok': false,
+      message: '동물 삭제 실패',
+    })
+  }
+})
 
 module.exports = router;
