@@ -1,45 +1,44 @@
 'use strict'
 
-const express = require("express")
-const router = express.Router() //라우터라고 선언한다.
+const express = require("express");
+const router = express.Router(); //라우터라고 선언한다.
 
-const Comment = require("../schemas/comment")
+const Comment = require("../schemas/comment");
 
-const authMiddleware = require("../middlewares/auth-middleware")
+const authMiddleware = require("../middlewares/auth-middleware");
 
-const User = require("../schemas/user")
+const User = require("../schemas/user");
 
 
 // 코멘트 작성
 router.post('/comment', authMiddleware, async (req, res) => { // post
     try {
-        // 수정예정
-        const { user } = res.locals
-        const userId = user.userId
-        const { animalId, description } = req.body
+        const { user } = res.locals;
+        const userId = user.userId;
+        const { animalId, description } = req.body;
 
-        const recentComment = await Comment.find().sort("-commentId").limit(1) // 최근 코메트 찾아서 정렬
-        let commentId = 1
+        const recentComment = await Comment.find().sort("-commentId").limit(1); // 최근 코메트 찾아서 정렬
+        let commentId = 1;
         if(recentComment.length != 0){ // 최근 코멘트가 있으면
             commentId = recentComment[0]['commentId'] + 1 // 새 배열 생성해서 1번부터 번호 부여
         }
 
-        const date = ( new Date().format("yyyy-MM-dd a/p hh:mm:ss"))
-        await Comment.create({ commentId, animalId, userId, description, date }) //만들어서 집어넣는다.
+        const date = ( new Date().format("yyyy-MM-dd a/p hh:mm:ss"));
+        await Comment.create({ commentId, animalId, userId, description, date }); //만들어서 집어넣는다.
 
         res.status(201).send({
             'ok': true,
             message: '댓글작성 성공'
-        })
+        });
 
     } catch (error) {
         console.log('댓글작성 CATCH ERROR', error);
         res.status(400).send({
             'ok': false,
             message: '댓글작성 실패'
-        })
+        });
     }
-})
+});
 
 // 코멘트 조회 ( 두 테이블 조회하여 하나의 결과값으로 재가공 하여 response )
 router.get("/comment/:animalId", async (req, res, next) => {

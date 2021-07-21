@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const animalsSchema = new Schema({
+    visitCount: {
+        type: Number,
+        required: true,
+    },
     like: {
         type: Number,
         required: true,

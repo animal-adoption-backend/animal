@@ -8,6 +8,31 @@ const User = require("../schemas/user")
 
 const authMiddleware = require("../middlewares/auth-middleware")
 
+// 동물 상세 페이지 조회수
+router.get("/animalVisit/:animalId", async (req, res) => {
+  try {
+    const { animalId } = req.params
+    const count = await Animals.findOne({ animalId })
+    let visitCount = count.visitCount
+    // console.log(visitCount)
+    visitCount += 1
+    // console.log(visitCount)
+    await Animals.updateOne({ animalId }, { $set: { visitCount } })
+
+    res.status(200).send({
+      "ok": true,
+      message: '동물 방문 성공',
+    })
+
+  } catch(error) {
+    console.error(error)
+    res.status(400).send({
+      "ok": false,
+      message: '동물 방문 실패',
+    })
+  }
+})
+
 // 동물 좋아요
 router.post("/animalLike/:animalId", async (req, res) => {
   try {
@@ -52,8 +77,9 @@ router.post("/animals", authMiddleware, async (req, res) => {
       animalId = recentAnimal[0]['animalId'] + 1
     }
     let like = 0
+    let visitCount = 0
 
-    await Animals.create({ userId, like, animalId, title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto })
+    await Animals.create({ visitCount, userId, like, animalId, title, animalName, animalSpecies, animalBreed, animalAge, animalGender, animalStory, animalPhoto })
     res.status(200).send({
       "ok": true,
       message: '동물 등록 성공',
@@ -72,6 +98,7 @@ router.post("/animals", authMiddleware, async (req, res) => {
 router.get("/animals", async (req, res) => {
   try {
     const animals = await Animals.find().sort('-animalId')
+    console.log(animals)
     res.status(200).send({
       'ok': true,
       result: animals,
