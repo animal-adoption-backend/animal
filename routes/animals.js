@@ -195,7 +195,7 @@ router.delete("/animals/:animalId", authMiddleware, async (req, res) => {
         message: '당신에게는 권한이 없습니다!',
       })
     }
-    await Animals.deleteOne({ userId, animalId})
+    await Animals.deleteOne({ userId, animalId })
 
     res.status(200).send({
       'ok': true,
